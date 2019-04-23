@@ -1,0 +1,13 @@
+pymongo
+requests
+Flask
+Flask_SocketIO
+Werkzeug
+telepot
+tqdm
+gevent
+pprint
+Werkzeug
+flask_pymongo
+pipreqs
+flask_basicauth
