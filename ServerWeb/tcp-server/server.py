@@ -102,6 +102,87 @@ class Newuser:
         door_id = result["ID"]
         return password, ttl, door_id
 
+# TODO: finish this class
+# class to deal with registration process
+class User:
+    def __init__(self, data):
+
+        self.id = ""
+        self.doors = []
+
+        if data[0] == "v":
+            self.verificationcode = data[2:]
+            self.check_first_reg()
+            self.output = self.id
+        elif data[0] == "r":
+            data = data[2:].split(";")
+            self.id = data[0]
+            self.name = data[1]
+            self.phone = data[2]
+            self.position = data[3]
+            self.department = data[4]
+            self.company = data[5]
+            self.register_new_user()
+        elif data[0] == 'g' and data[2] == "?":
+            data = data[3:].split(";")
+            self.is_access(data)
+
+    def is_access(self, data):
+        ID = data[0]
+        doors = json.loads(data[1])
+        ttl = data[2]
+        result = db.users.find_one({"ID": ID})
+        # TODO: check is there access of user to doors it asking, and if - give the access to his guest
+        for door in doors:
+            res = False
+            res = result["id"] == door["id"]
+
+    def check_first_reg(self):
+        result = db.users.find_one({"verification": self.verificationcode})
+        if result:
+            self.id = result["ID"]
+        else:
+            self.check_guest_link()
+
+    def check_guest_link(self):
+        result = db.guests.find_one({"guestlink": self.verificationcode})
+        if result:
+            self.doors = result["doors"]
+            self.register_new_user_from_guest()
+        else:
+            self.id = "0"
+
+    def register_new_user_from_guest(self):
+        self.id = int(datetime.now().timestamp()*1000)
+        item_doc = {
+            'ID': self.id,
+            'verification': self.verificationcode,
+            'doors': self.doors
+        }
+        db.users.insert_one(item_doc)
+
+    # This function
+    def register_new_user(self):
+        result = db.users.find_one({"ID": self.id})
+        doors = result["doors"]
+        db.users.delete_many({"ID": self.id})
+        item_doc = {
+            'ID': self.id,
+            'verification': self.verificationcode,
+            'name': self.name,
+            'phone': self.phone,
+            'position': self.position,
+            'department': self.department,
+            'company': self.company,
+            'doors': doors
+        }
+        db.users.insert_one(item_doc)
+        self.output = "r/" + str(self.id) + ";" + str(self.name) + ";" + str(self.position) + ";" \
+                      + str(self.department) + ";" + str(self.company) + ";" + str(self.doors)
+
+
+
+
 
 # class to deal with new door
 class Newdoor:
@@ -113,7 +194,7 @@ class Newdoor:
         self.name = data[1]
         self.parent_id = data[2]
         self.password = "060593"
-        self.ttl = datetime.now().second + self.days*86400
+        self.ttl = int(datetime.now().timestamp()) + self.days*86400
         self.output = ''
         self.parent_zone_id = ''
         self.register()
