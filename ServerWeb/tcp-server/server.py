@@ -8,9 +8,15 @@ __maintainer__ = "Bauyrzhan Ospan"
 __email__ = "bospan@cleverest.tech"
 __status__ = "Development"
 
+# BLOCK IMPORTS
+
 # standard import of os
 import os
+
+# import random to create validation passwords
 import random
+
+# import string to handle strings
 import string
 
 # import socket programming library
@@ -30,15 +36,16 @@ import json
 from datetime import datetime
 
 
-# global variables
+# BLOCK GLOBAL VARIABLES
 print_lock = threading.Lock()
 client = MongoClient('mongodb://database:27017/')
 db = client.buyqaw
 
-# classes
+# BLOCK CLASSES
+
 
 # TODO change it to the new way from flask
-# class to deal with new user
+# DEPRECATED change this function
 class Newuser:
     def __init__(self, data):
         # Request from mobile app:
@@ -299,6 +306,7 @@ class Newdoor:
             pass
 
 
+# class to give access
 class Access:
     def __init__(self, data):
         request = data[3:].split(";")
@@ -373,6 +381,8 @@ class Access:
             return ("a/!")
 
 
+# TODO add function to log every single peace of action
+# class to handle request
 class Request:
     def __init__(self, data, connection):
         self.data = data
@@ -386,63 +396,59 @@ class Request:
             info = Access(data)
         elif self.data[0] == "g":
             info = Guest(data)
+        else:
+            info = "0"
 
         self.output = info.output
         self.connection.send(str(self.output).encode('utf-8'))
 
-        # TODO add function to log every single peace of action
 
+# class to handle TCP server
+class TCPserver:
+    def __init__(self):
+        self.host = "0.0.0.0"
+        self.port = 7777
 
-# functions
+        self.sox = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sox.bind((self.host, self.port))
+        print("socket binded to post", self.port)
+        self.handle()
+        self.sox.close()
 
-# thread function
-def threaded(connection):
-    while True:
+    def handle(self):
+        # put the socket into listening mode
+        self.sox.listen(50)
+        print("socket is listening")
 
-        # data received from client
-        data = connection.recv(50000).decode('utf-8')
-        if not data:
-            print('Bye')
+        # a forever loop until client wants to exit
+        while True:
+            # establish connection with client
+            connection, addr = self.sox.accept()
 
-            # lock released on exit
-            print_lock.release()
-            break
+            # lock acquired by client
+            print_lock.acquire()
+            print('Connected to :', addr[0], ':', addr[1])
 
-        Request(data, connection)
+            # Start a new thread and return its identifier
+            start_new_thread(self.server, (connection,))
 
-        # connection closed
-    connection.close()
+    # thread function
+    def server(self, connection):
+        while True:
+            # data received from client
+            data = connection.recv(50000).decode('utf-8')
+            if not data:
+                print('Bye')
+                # lock released on exit
+                print_lock.release()
+                break
+            Request(data, connection)
+            # connection closed
+        connection.close()
 
+# BLOCK STATIC FUNCTIONS
 
-def main():
-    host = "0.0.0.0"
-
-    # reverse a port on your computer
-    # in our case it is 12345 but it
-    # can be anything
-    port = 7777
-    sox = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sox.bind((host, port))
-    print("socket binded to post", port)
-
-    # put the socket into listening mode
-    sox.listen(50)
-    print("socket is listening")
-
-    # a forever loop until client wants to exit
-    while True:
-        # establish connection with client
-        connection, addr = sox.accept()
-
-        # lock acquired by client
-        print_lock.acquire()
-        print('Connected to :', addr[0], ':', addr[1])
-
-        # Start a new thread and return its identifier
-        start_new_thread(threaded, (connection,))
-    sox.close()
-
-
+# BLOCK MAIN
 if __name__ == '__main__':
-    main()
+    print("Hello, World!")
 
