@@ -236,7 +236,8 @@ Page to change profile. Profile change has to be accepted form the server, so it
 
 ## Sequence diagram
 
-![](https://i.imgur.com/Gyz4e7n.png)
+![](https://i.imgur.com/OZzPbZm.png)
+
 
 ### Sequence diagram code
 
@@ -297,7 +298,7 @@ alt Bad verification code
 TCPServer->MobileApp: v/0
 end 
 MobileApp->TCPServer: Form details from Sign Up page:\nr/56303h43;name and surname;phone;position;dep;company;
-TCPServer->MobileApp: List of buildings and enters:\nr/[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link"}]}]
+TCPServer->MobileApp: List of buildings and enters:\nr/[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}]
 end
 opt Profile update
 MobileApp->TCPServer:Data from form in Profile page:\nr/56303h43;name and surname;phone;position;dep;company;
@@ -307,18 +308,18 @@ opt Messages
 MobileApp->TCPServer:Every 15 minutes:\nm/?
 TCPServer->MobileApp:If no messages:\nm/0\nIf any:\nm/utf-8 font awesome icon;hex color;title;full text;
 alt Profile change message
-TCPServer->MobileApp: New profile data:\nr/56303h43;name and surname;phone;position;dep;company;\n[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link"}]}]
+TCPServer->MobileApp: New profile data:\nr/56303h43;name and surname;phone;position;dep;company;\n[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}]
 end
 end
 opt Invite Guest
-MobileApp->TCPServer: Data from Invite Guest page:\ng/?56303h43;[{id: "5544332211", enter: [{name: "1A"}]}]; ttl:"1555666261"
+MobileApp->TCPServer: Data from Invite Guest page:\ng/?56303h43;[{id: "5544332211", enter: [{name: "1A", MAC: "80:e6:50:02:a3:9a"}]}]; ttl:"1555666261"
 TCPServer->MobileApp: Verification code:\n2178969124hn#123
 MobileApp->Outside: Share by deep link:\nbuyqawhub:/ /2178969124hn#123
 end
 opt Be Guest
 Outside->MobileApp: Deep link with verification code
 MobileApp->TCPServer: g/!56303h43;2178969124hn#123;
-TCPServer->MobileApp: r/56303h43;name and surname;phone;position;dep;company;\n[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link"}]}]
+TCPServer->MobileApp: r/56303h43;name and surname;phone;position;dep;company;\n[{name: "Зеленый Квартал", id: "5544332211",picture: "link"\nenter: [{name: "1A", ttl: "1555666261", key: "123456", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}]
 alt App is not installed
 Outside->AppStore: Install mobile app
 AppStore->MobileApp: Put verification code
@@ -331,3 +332,5 @@ end
 1. [BLE peripheral cordova plugin](https://github.com/don/cordova-plugin-ble-peripheral)
 2. [How BLE works](https://www.mikroe.com/blog/bluetooth-low-energy-part-1-introduction-ble)
 3. [What is Service and Characteristic in BLE](https://www.oreilly.com/library/view/getting-started-with/9781491900550/ch04.html)
+4. [Mobile app to simulate door](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp)
+5. [Mini tutorial howtoNrfConnect](https://youtu.be/sGrBiuT3AlM)
