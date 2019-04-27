@@ -49,7 +49,7 @@ db = client.buyqaw
 class Newuser:
     def __init__(self, data):
         # Request from mobile app:
-        # r/o;56303h43;930423;[{"name": "Зеленый Квартал", "id": "555444333", "enter": [{"name": "1A"}]}];BIClients
+        # r/[{"name": "Зеленый Квартал", "id": "555444333", "enter": [{"name": "1A"}]}];BIClients
         self.type = data[2]
         self.data = data.split(";")
         self.id = self.data[1]
@@ -274,12 +274,13 @@ class User:
 # class to deal with new door
 class Newdoor:
     def __init__(self, data, days=365):
-        # Request from admin`s page is: x/80:e6:50:02:a3:9a;A1;555444333;parent_zone_id
+        # Request from admin`s page is: x/80:e6:50:02:a3:9a;A1;555444333;parent_zone_id;picture
         data = data.split(";")
         self.days = days
         self.id = data[0][2::]
         self.name = data[1]
         self.parent_id = data[2]
+        self.picture = data[3]
         self.password = "060593"
         self.ttl = int(datetime.now().timestamp()) + self.days*86400
         self.output = ''
@@ -293,7 +294,9 @@ class Newdoor:
             'ID': self.id,
             'password': self.password,
             'ttl': self.ttl,
-            'parent_id': self.parent_id
+            'parent_id': self.parent_id,
+            'parent_zone_id': self.parent_zone_id,
+            'picture': self.picture
         }
         db.doors.insert_one(item_doc)
         self.output = "x/" + self.id + ";" + self.name + ";" + self.parent_id + ";"
@@ -327,7 +330,7 @@ class Access:
     def check(self):
         self.door = db.doors.find_one({"ID": self.door_id})
         self.user = db.users.find_one({"ID": self.user_id})
-        if self.door == None:
+        if self.door is None:
             item_doc = {
                 'user_id': self.user_id,
                 'door_id': self.door_id,
@@ -335,7 +338,7 @@ class Access:
                 'timestamp': datetime.now()
             }
             db.alarms.insert_one(item_doc)
-        elif self.user == None:
+        elif self.user is None:
             item_doc = {
                 'user_id': self.user_id,
                 'door_id': self.door_id,
