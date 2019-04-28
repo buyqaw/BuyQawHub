@@ -35,6 +35,9 @@ import json
 # import datetime to deal with timestamps
 from datetime import datetime
 
+# module to create crypto random links and other
+import secrets
+
 
 # BLOCK GLOBAL VARIABLES
 print_lock = threading.Lock()
@@ -44,73 +47,48 @@ db = client.buyqaw
 # BLOCK CLASSES
 
 
-# TODO change it to the new way from flask
-# DEPRECATED change this function
-class Newuser:
+class Admin:
     def __init__(self, data):
-        # Request from mobile app:
-        # r/[{"name": "Зеленый Квартал", "id": "555444333", "enter": [{"name": "1A"}]}];BIClients
-        self.type = data[2]
-        self.data = data.split(";")
-        self.id = self.data[1]
-        self.origin = self.data[-1]
-        self.day = int(self.data[2][4:6])
-        self.month = int(self.data[2][2:4])
-        self.year, self.age = self.defineage()
-        self.doors = json.loads(self.data[3])
-        self.givepass()
-        self.output = "r/" + self.type + ";" + self.id + ";" + \
-                      str(self.year)[-2:] + str(self.month) + \
-                      str(self.day) + ";" + str(self.doors) + \
-                      ";" + str(self.origin)
-        self.register()
+        # Admin panel:
+        # register new users:
+        # a/r;mailofadmin;amount;[{name: "Зеленый Квартал", id: "5544332211",
+        # picture: "link", enter: [{name: "1A", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}}]
+        if data[2] == "r":
+            self.output = "a/r;" + str(self.registeruser(data))
+        # register new admins:
+        # a/a;mailofadmin;amount;[{name: "Зеленый Квартал", id: "5544332211",
+        # picture: "link", enter: [{name: "1A", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}}]
+        elif data[2] == "a":
+            self.output = "a/a;" + str(self.registeruser(data))
+        # TODO create other admin panel functions
 
-    def defineage(self): # Определить возраст человека
-        iin = self.data[2]
-        year = iin[0:2]
-        now = datetime.now()
-        if int(year) <= int(str(now.year)[-2:]):
-            prefix = "20"
-        else:
-            prefix = "19"
-        year = int(prefix + year)
-        birthdate = datetime.strptime(str(self.day) + str(self.month) + str(year), '%d%m%Y')
-        age = now.year - birthdate.year - ((now.month, now.day) < (birthdate.month, birthdate.day))
-        return year, age
 
-    def givepass(self):
-        for i in range(len(self.doors)):
-            for j in range(len(self.doors[i]["enter"])):
-                self.doors[i]["enter"][j]["key"], self.doors[i]["enter"][j]["ttl"], self.doors[i]['enter'][j]["door_id"] = \
-                    self.doorbyparent_id(self.doors[i]["id"], self.doors[i]["enter"][j]["name"])
+    def registeruser(self, data):
+        data = data.split(";")
+        parent = data[1]
+        amount = data[2]
+        doors = json.loads(data[3])
+        verifications = []
+        for user in range(amount):
+            user_id = str(secrets.token_hex(4)) + str(parent) + str(int(datetime.now().timestamp()))
+            verification = secrets.token_urlsafe(32)
+            verifications.append(verification)
+            db.users.insert_one({"ID": user_id, "verification": verification, "doors": doors})
+        return verifications
 
-    def register(self):
-        self.check()
-        item_doc = {
-            'type': self.type,
-            'ID': self.id,
-            'origin': self.origin,
-            'bday': self.day,
-            'bmonth': self.month,
-            'byear': self.year,
-            'age': self.age,
-            'doors': self.doors
-        }
-        db.users.insert_one(item_doc)
 
-    def check(self):
-        result = db.users.find_one({"ID": self.id})
-        if result:
-            db.users.delete_many({"ID": self.id})
-        else:
-            pass
-
-    def doorbyparent_id(self, parent_id, name):
-        result = db.doors.find_one({"parent_id": parent_id, "name": name})
-        password = result["password"]
-        ttl = result["ttl"]
-        door_id = result["ID"]
-        return password, ttl, door_id
+    def registeradmin(self, data):
+        data = data.split(";")
+        parent = data[1]
+        amount = data[2]
+        doors = json.loads(data[3])
+        verifications = []
+        for admin in range(amount):
+            admin_id = str(secrets.token_hex(4)) + str(parent) + str(int(datetime.now().timestamp()))
+            verification = secrets.token_urlsafe(32)
+            verifications.append(verification)
+            db.admins.insert_one({"ID": admin_id, "verification": verification, "doors": doors})
+        return verifications
 
 
 class Guest:
@@ -163,7 +141,7 @@ class Guest:
             db.alarms.insert_one(item_doc)
 
         id = int(datetime.now().timestamp() * 1000)
-        verificationcode = self.rand_passw(12, id)
+        verificationcode = secrets.token_urlsafe(32)
         item_doc = {
             'ID': id,
             'guestlink': verificationcode,
@@ -173,16 +151,6 @@ class Guest:
 
         self.output = verificationcode
 
-    def rand_passw(self, s, end):
-
-        # Takes random choices from
-        # ascii_letters and digits
-        generate_pass = ''.join([random.choice(string.ascii_uppercase +
-                                               string.ascii_lowercase +
-                                               string.digits)
-                                 for n in range(s)])
-        generate_pass += str(end)
-        return generate_pass
 
     def check_guest_link(self):
         result = db.guests.find_one({"guestlink": self.gverification})
@@ -271,8 +239,9 @@ class User:
                       + str(self.department) + ";" + str(self.company) + ";" + str(self.doors)
 
 
+# TODO problem when initiating new door, add it to admin and users... Need to think about it
 # class to deal with new door
-class Newdoor:
+class Door:
     def __init__(self, data, days=365):
         # Request from admin`s page is: x/80:e6:50:02:a3:9a;A1;555444333;parent_zone_id;picture
         data = data.split(";")
@@ -347,6 +316,13 @@ class Access:
             }
             db.alarms.insert_one(item_doc)
         else:
+            item_doc = {
+                'user_id': self.user_id,
+                'door_id': self.door_id,
+                'alarm': "Request",
+                'timestamp': datetime.now()
+            }
+            db.log.insert_one(item_doc)
             result = db.users.find_one({"doors.enter.MAC": self.door_id})
             if result:
                 for buildings in result["doors"]:
@@ -357,6 +333,14 @@ class Access:
                                 self.ttl = doors["ttl"]
                         except:
                             pass
+        if self.password == "0":
+            item_doc = {
+                'user_id': self.user_id,
+                'door_id': self.door_id,
+                'timestamp': datetime.now(),
+                'type': "Failure"
+            }
+            db.log.insert_one(item_doc)
         self.output += str(self.password) + ";" + str(self.ttl) + ";"
 
     def logit(self, request):  # a/!56303h43;80:e6:50:02:a3:9a;1555666261;
@@ -364,37 +348,33 @@ class Access:
         user_id = request[0]
         door_id = request[1]
         self.when = request[2]
-
-        if user_id != self.user_id or door_id != self.door_id:
-            item_doc = {
-                'user_id': self.user_id,
-                'door_id': self.door_id,
-                'alarm': "Ids changed",
-                'timestamp': datetime.now()
-            }
-            db.alarms.insert_one(item_doc)
-            return ("a/!Donothackme")
-        else:
-            item_doc = {
-                'user_id': self.user_id,
-                'door_id': self.door_id,
-                'timestamp': datetime.fromtimestamp(int(self.when))
-            }
-            db.log.insert_one(item_doc)
-            return ("a/!")
+        item_doc = {
+            'user_id': self.user_id,
+            'door_id': self.door_id,
+            'timestamp': datetime.fromtimestamp(int(self.when)),
+            'type': "Access"
+        }
+        db.log.insert_one(item_doc)
+        return "a/!"
 
 
-# TODO add function to log every single peace of action
 # class to handle request
 class Request:
-    def __init__(self, data, connection):
+    def __init__(self, data, connection, addr):
+        item_doc = {
+            'data': data,
+            'connection': addr,
+            'timestamp': datetime.now(),
+            'type': data[0]
+        }
+        db.lograw.insert_one(item_doc)
         self.data = data
         self.connection = connection
         self.output = ""
         if self.data[0] == "r" or self.data[0] == "v":
             info = User(data)
         elif self.data[0] == "x":
-            info = Newdoor(data)
+            info = Door(data)
         elif self.data[0] == "a":
             info = Access(data)
         elif self.data[0] == "g":
@@ -433,10 +413,10 @@ class TCPserver:
             print('Connected to :', addr[0], ':', addr[1])
 
             # Start a new thread and return its identifier
-            start_new_thread(self.server, (connection,))
+            start_new_thread(self.server, (connection, addr,))
 
     # thread function
-    def server(self, connection):
+    def server(self, connection, addr):
         while True:
             # data received from client
             data = connection.recv(50000).decode('utf-8')
@@ -445,13 +425,26 @@ class TCPserver:
                 # lock released on exit
                 print_lock.release()
                 break
-            Request(data, connection)
+            Request(data, connection, addr)
             # connection closed
         connection.close()
 
 # BLOCK STATIC FUNCTIONS
 
+# Populate with dummy values
+def populate():
+    Door("x/80:e6:50:02:a3:1a;1st floor;555444333;0;img/hello.png")
+    Door("x/80:e6:50:02:a3:2a;2nd floor;555444333;0;img/hello.png")
+    Door("x/80:e6:50:02:a3:3a;3rd floor;555444333;0;img/hello.png")
+    Door("x/80:e6:50:02:a3:4a;4th floor;555444333;0;img/hello.png")
+    Admin('a/r;Naboo;1;[{name: "Зеленый Квартал", id: "555444333", '
+          'picture: "link", enter: '
+          '[{name: "1st floor", picture: "img/hello.png", MAC: "80:e6:50:02:a3:9a"}]}}]')
+
 # BLOCK MAIN
 if __name__ == '__main__':
-    print("Hello, World!")
+    # TCPserver()
+    populate()
+
+
 
