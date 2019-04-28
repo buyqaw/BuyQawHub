@@ -240,6 +240,7 @@ class User:
 
 
 # TODO problem when initiating new door, add it to admin and users... Need to think about it
+# TODO we can try to do it with Guest functionality...
 # class to deal with new door
 class Door:
     def __init__(self, data, days=365):
