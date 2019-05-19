@@ -50,31 +50,11 @@ db = client.buyqaw
 class Admin:
     def __init__(self, data):
         # Admin panel:
-        # register new users:
-        # a/r;mailofadmin;amount;[{name: "Зеленый Квартал", id: "5544332211",
-        # picture: "link", enter: [{name: "1A", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}}]
-        if data[2] == "r":
-            self.output = "a/r;" + str(self.registeruser(data))
         # register new admins:
-        # a/a;mailofadmin;amount;[{name: "Зеленый Квартал", id: "5544332211",
-        # picture: "link", enter: [{name: "1A", picture: "link", MAC: "80:e6:50:02:a3:9a"}]}}]
-        elif data[2] == "a":
+        # a/r;mailofadmin;["80:e6:50:02:a3:9a", "80:e6:50:02:a3:9b", "80:e6:50:02:a3:9c"]
+        if data[2] == "r":
             self.output = "a/a;" + str(self.registeruser(data))
         # TODO create other admin panel functions
-
-
-    def registeruser(self, data):
-        data = data.split(";")
-        parent = data[1]
-        amount = data[2]
-        doors = json.loads(data[3])
-        verifications = []
-        for user in range(amount):
-            user_id = str(secrets.token_hex(4)) + str(parent) + str(int(datetime.now().timestamp()))
-            verification = secrets.token_urlsafe(32)
-            verifications.append(verification)
-            db.users.insert_one({"ID": user_id, "verification": verification, "doors": doors})
-        return verifications
 
 
     def registeradmin(self, data):
@@ -244,17 +224,18 @@ class User:
 # class to deal with new door
 class Door:
     def __init__(self, data, days=365):
-        # Request from admin`s page is: x/80:e6:50:02:a3:9a;A1;555444333;parent_zone_id;picture
+        # Request from admin`s page is: x/Admin mail;80:e6:50:02:a3:9a;A1;555444333;parent_zone_id;picture
         data = data.split(";")
         self.days = days
-        self.id = data[0][2::]
-        self.name = data[1]
-        self.parent_id = data[2]
-        self.picture = data[3]
+        self.admin = data[0][2::]
+        self.id = data[1][2::]
+        self.name = data[2]
+        self.parent_id = data[3]
+        self.picture = data[5]
         self.password = "060593"
-        self.ttl = int(datetime.now().timestamp()) + self.days*86400
+        self.ttl = 0
         self.output = ''
-        self.parent_zone_id = ''
+        self.parent_zone_id = data[4]
         self.register()
 
     def register(self):
