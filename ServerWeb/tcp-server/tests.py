@@ -54,7 +54,8 @@ def populate():
         "name": "test1",
         "parent_ID": 1,
         "parent_zone_ID": None,
-        "picture": "",
+        "picture": "https://www.doylecollection.com/var/doyle/storage/images/media/doyle-redesign/images/"
+                   "blog/marylebone/marylebone-concierge-image-4/149744-1-eng-US/marylebone-concierge-image-4.jpg",
         "ttl": 0,
         "password": "060593",
         "created": "root",
@@ -66,7 +67,7 @@ def populate():
     buildings = {
         'BID': "1",
         "name": "testBuilding",
-        "picture": ""
+        "picture": "https://sputniknews.kz/images/old/1285/66/12856669.jpg"
     }
     db.building.insert_one(buildings)
     boory = db.building.find_one({"BID": "1"})
