@@ -232,6 +232,7 @@ class User:
                         continue
                     else:
                         break
+
                 db.user.insert_one(self.__dict__)
                 print("Created new user: ")
                 pprint(self.__dict__)
@@ -302,7 +303,10 @@ class User:
                 print()
                 if self.duplicates():
                     print("No duplicate was found")
+                    db.user.delete_many({"ID": self.ID})
+                    print("Deleted old data about user, merging new data")
                     db.user.insert_one(self.__dict__)
+                    print("New data is pushed")
                     self.generateoutput()
 
     def duplicates(self):
