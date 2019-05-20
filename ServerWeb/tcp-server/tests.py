@@ -105,6 +105,32 @@ def populate():
     }
     db.user.insert_one(user)
     usic = db.user.find_one({"ID": "2"})
+    user1 = {
+        'ID': "1",
+        'registered': True,
+        'verification': "warcbahrwcmi",
+        'name': "test 2",
+        'email': "test2",
+        'phone': "test2",
+        'position': "test2",
+        'department': "test2",
+        'company': "test2",
+        'doors': ['80:e6:50:02:a3:1a'],
+        'ttl': [0],
+        'creation': datetime.now(),
+        'created': "1",
+        'isadmin': False,
+        'admindoors': [],
+        'adminbuildings': [],
+        'admincreated': "root",
+        'admincreation': datetime.now(),
+        "workstart": "9:00",
+        "workend": "18:00",
+        "holidays": [5, 6]
+    }
+    db.user.insert_one(user1)
+    usic1 = db.user.find_one({"ID": "1"})
+
     print("#### START OF TEST ####")
     print()
     print("Created door with this data: ")
@@ -119,7 +145,14 @@ def populate():
     pprint(gigi)
     print("")
     print("")
-    print("Created test user with this data: ")
+    print("Created test user 1 with this data: ")
+    pprint(usic1)
+    print("")
+    print("")
+    print("---------------------------")
+    print("")
+    print("")
+    print("Created test user 2 with this data: ")
     pprint(usic)
     print("")
     print("")
@@ -174,6 +207,96 @@ class Test:
         finally:
             print('closing socket')
             self.sock.close()
+
+    def access(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_address = ('tcp-server', 7777)
+        print()
+        print("######################################")
+        print("TESTING ACCESS TO REGISTERED USER")
+        print()
+        self.sock.connect(self.server_address)
+        print("Connected to TCP server")
+        print()
+        print("-----------------------------------")
+        user = db.user.find_one({"ID": "1"})
+        try:
+            print("Sending access request from user 1")
+            message = "a/*1;80:e6:50:02:a3:1a;"
+            print()
+            print('sending {!r}'.format(message))
+            self.sock.sendall(message.encode('utf-8'))
+
+            data = self.sock.recv(5000).decode("utf-8")
+            print("Received value: ")
+            print(data)
+            message = "a/?1;80:e6:50:02:a3:1a;"
+            print()
+            print('sending {!r}'.format(message))
+            self.sock.sendall(message.encode('utf-8'))
+
+            data = self.sock.recv(5000).decode("utf-8")
+            print("Received value: ")
+            print(data)
+            message = "a/!1;80:e6:50:02:a3:1a;"
+            message += str(datetime.now().timestamp()) + ";"
+            print()
+            print('sending {!r}'.format(message))
+            self.sock.sendall(message.encode('utf-8'))
+
+            data = self.sock.recv(5000).decode("utf-8")
+            print("Received value: ")
+            print(data)
+        except:
+            print("FAILS: no connection to the server...")
+
+    def message(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_address = ('tcp-server', 7777)
+        print()
+        print("######################################")
+        print("TESTING MESSAGES")
+        print()
+        self.sock.connect(self.server_address)
+        print("Connected to TCP server")
+        print()
+        print("-----------------------------------")
+        try:
+            print("Sending message request from user 1")
+            message = "m/?1;"
+            print()
+            print('sending {!r}'.format(message))
+            self.sock.sendall(message.encode('utf-8'))
+
+            data = self.sock.recv(5000).decode("utf-8")
+            print("Received value: ")
+            print(data)
+        except:
+            print("FAILS: no connection to the server...")
+
+    def password(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_address = ('tcp-server', 7777)
+        print()
+        print("######################################")
+        print("TESTING PASSWORD CHANGE")
+        print()
+        self.sock.connect(self.server_address)
+        print("Connected to TCP server")
+        print()
+        print("-----------------------------------")
+        try:
+            print("Sending message request from user 1")
+            message = "e/?80:e6:50:02:a3:1a;"
+            print()
+            print('sending {!r}'.format(message))
+            self.sock.sendall(message.encode('utf-8'))
+
+            data = self.sock.recv(5000).decode("utf-8")
+            print("Received value: ")
+            print(data)
+        except:
+            print("FAILS: no connection to the server...")
 
     def create_new_guest(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -244,3 +367,6 @@ if __name__ == '__main__':
     test.verify_new_user()
     test.create_new_guest()
     test.give_guest_access_to_old_user()
+    test.access()
+    test.message()
+    test.password()

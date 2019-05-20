@@ -155,6 +155,13 @@ class TCPserver:
             elif command == "g":
                 self.guest.giveaccess(self.request)
                 self.output = self.guest.output
+            # TODO next functions are test, deprecate them, and do your work, bitch
+            elif command == "e":
+                self.output = "e/!"
+            elif command == "m":
+                self.output = "m/f0f3;ff0000;Test message;This is test message to test it;"
+            else:
+                self.output = "ERROR: unknown command"
 
 
         def lograw(self):
