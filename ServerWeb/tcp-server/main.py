@@ -162,6 +162,9 @@ class TCPserver:
                 self.output = "m/f0f3;ff0000;Test message;This is test message to test it;"
             else:
                 self.output = "ERROR: unknown command"
+            print("Output is: ")
+            print(self.output)
+            print("=======================================")
 
 
         def lograw(self):
@@ -516,8 +519,8 @@ class Access:
                 "log": datetime.now(),
                 "status": "Preaction",
                 'error': False,
-                'user': request[2::].split(";")[0],
-                'door': request[2::].split(";")[1],
+                'user': request[3::].split(";")[0],
+                'door': request[3::].split(";")[1],
                 'ip': IP
             }
             db.log.insert_one(item_doc)
@@ -528,8 +531,8 @@ class Access:
                 "log": datetime.fromtimestamp(float(request[2::].split(";")[2])),
                 "status": "Opendoor",
                 'error': False,
-                'user': request[2::].split(";")[0],
-                'door': request[2::].split(";")[1],
+                'user': request[3::].split(";")[0],
+                'door': request[3::].split(";")[1],
                 'ip': IP
             }
             db.log.insert_one(item_doc)
@@ -540,8 +543,8 @@ class Access:
             self.output = "a/"
 
     def giveaccess(self, request):
-        self.user_id = request[2::].split(";")[0]
-        self.MAC = request[2::].split(";")[1]
+        self.user_id = request[3::].split(";")[0]
+        self.MAC = request[3::].split(";")[1]
         result = db.user.find_one({"ID": self.user_id})
         if result:
             macs = result["doors"]
@@ -565,8 +568,8 @@ class Access:
                 "log": datetime.now(),
                 "status": "Failed",
                 'error': False,
-                'user': request[2::].split(";")[0],
-                'door': request[2::].split(";")[1],
+                'user': request[3::].split(";")[0],
+                'door': request[3::].split(";")[1],
                 'ip': self.IP
             }
             db.log.insert_one(item_doc)
