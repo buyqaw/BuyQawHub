@@ -302,6 +302,7 @@ class User:
                 print()
                 if self.duplicates():
                     print("No duplicate was found")
+                    db.user.insert_one(self.__dict__)
                     self.generateoutput()
 
     def duplicates(self):
